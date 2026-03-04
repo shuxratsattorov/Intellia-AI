@@ -1,52 +1,83 @@
+import pytz
+import datetime
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import AnyHttpUrl
-from typing import List
+
 
 class Settings(BaseSettings):
     # App
-    APP_NAME: str = "AI Academic Assistant API"
-    ENV: str = "local"
-    DEBUG: bool = True
+    APP_NAME: str
+    ENV: str
+    DEBUG: bool
+
+    # CORS
+    CORS_ORIGINS: list
 
     # Security
     JWT_SECRET: str
-    JWT_ALG: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MIN: int = 60
+    JWT_ALG: str
+    ACCESS_TOKEN_EXPIRE_MIN: int
 
-    # DB
-    DATABASE_URL: str
-
-    # CORS
-    CORS_ORIGINS: str = "http://localhost:3000"
-
-    # Optional
-    REDIS_URL: str | None = None
+    # Database
+    DB_HOST: str
+    DB_PORT: int
+    DB_NAME: str
+    DB_USER: str
+    DB_PASS: str
 
     # OpenAI
     OPENAI_API_KEY: str
-    OPENAI_MODEL: str = "gpt-4.1-mini"
-    OPENAI_TEMPERATURE: float = 0.7
-    OPENAI_MAX_TOKENS: int = 1200
+    OPENAI_MODEL: str
+    OPENAI_TEMPERATURE: float
+    OPENAI_MAX_TOKENS: int
 
-    # Email (optional)
-    SMTP_HOST: str | None = None
-    SMTP_PORT: int = 587
-    SMTP_USER: str | None = None
-    SMTP_PASSWORD: str | None = None
-    SMTP_FROM: str | None = None
+    # Email
+    SMTP_HOST: str
+    SMTP_PORT: int
+    SMTP_USER: str
+    SMTP_PASS: str
+    SMTP_FROM: str
 
-    # Storage (optional)
-    STORAGE_DRIVER: str = "local"
-    STORAGE_LOCAL_DIR: str = "./storage"
-    S3_BUCKET: str | None = None
-    S3_REGION: str | None = None
-    S3_ACCESS_KEY: str | None = None
-    S3_SECRET_KEY: str | None = None
+    # Storage
+    STORAGE_DRIVER: str
+    STORAGE_LOCAL_DIR: str
+    S3_BUCKET: str
+    S3_REGION: str
+    S3_ACCESS_KEY: str
+    S3_SECRET_KEY: str
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    def cors_list(self) -> List[str]:
-        # "a,b,c" => ["a","b","c"]
-        return [x.strip() for x in self.CORS_ORIGINS.split(",") if x.strip()]
+    @property
+    def DATABASE_URL_asyncpg(self):
+        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    model_config = SettingsConfigDict(
+        env_file=(Path(__file__).resolve().parents[2] / ".env"), 
+        extra="allow"
+        )
+
+    @property
+    def cors_origins(self) -> list[str]:
+        origins = self.CORS_ORIGINS
+
+        if self.DEBUG:
+            origins.extend([
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+            ])
+
+        return origins
+
+    @property
+    def current_time(time_zone=True):
+        toshkent_tz = pytz.timezone('Asia/Tashkent')
+
+        if time_zone:
+            return datetime.datetime.now(tz=toshkent_tz)
+        else:
+            return datetime.datetime.now()    
+
 
 settings = Settings()
