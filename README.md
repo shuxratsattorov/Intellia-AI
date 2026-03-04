@@ -1,5 +1,17 @@
-Feature-based (Modules)
+# Intellia AI — API
 
+Feature-based (modules)
+
+## Tech stack
+- Python (FastAPI)
+- Async SQLAlchemy + Alembic migrations
+- JWT auth
+- Redis (cache / rate limit)
+- Docker
+
+## Project structure (feature-based modules)
+
+```text
 apps/api/
 ├─ app/
 │  ├─ main.py                       # create_app + router include
