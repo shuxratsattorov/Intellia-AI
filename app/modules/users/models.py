@@ -2,7 +2,8 @@ from __future__ import annotations
 from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, IDMixin, TimestampMixin, SoftDeleteMixin
+from app.db.base import Base, IDMixin, TimestampMixin
+from app.modules.auth.models.auth import UserCredentials
 
 
 class User(Base, IDMixin, TimestampMixin):
@@ -13,7 +14,7 @@ class User(Base, IDMixin, TimestampMixin):
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    # 1:1 relations
+
     credentials: Mapped["UserCredentials"] = relationship(
         back_populates="user",
         uselist=False,
