@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     JWT_REFRESH_TTL_DAYS: int
 
     # Password Hash
+    PASS_PEPPER: str
     TIME_COST: int
     MEMORY_COST: int
     PARALLELISM: int
