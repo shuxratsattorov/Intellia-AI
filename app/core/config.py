@@ -13,10 +13,22 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list
 
-    # Security
-    JWT_SECRET: str
-    JWT_ALG: str
-    ACCESS_TOKEN_EXPIRE_MIN: int
+    # JWT Security
+    JWT_ALGORITHM: str
+    JWT_PRIVATE_KEY: str
+    JWT_PUBLIC_KEY: str
+    JWT_ISSUER: str
+    JWT_AUDIENCE: str
+    JWT_ACCESS_TTL_MINUTES: int
+    JWT_REFRESH_TTL_DAYS: int
+
+    # Password Hash
+    TIME_COST: int
+    MEMORY_COST: int
+    PARALLELISM: int
+    HASH_LEN: int
+    SALT_LEN: int
+    ENCODING: str
 
     # Database
     DB_HOST: str

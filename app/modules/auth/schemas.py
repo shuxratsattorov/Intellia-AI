@@ -5,6 +5,11 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=12)
 
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return v.strip().lower()
+
     @field_validator("password")
     @classmethod
     def validate_password(cls, value: str) -> str:
@@ -26,10 +31,17 @@ class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    access_expires_at: str
+    refresh_expires_at: str
 
-class LoginRequest(BaseModel):
+
+class UserOut(BaseModel):
+    id: int
     email: EmailStr
-    password: str
+    is_active: bool
+    roles: list[str]
 
-class RefreshRequest(BaseModel):
-    refresh_token: str
+
+class RegisterResponse(BaseModel):
+    user: UserOut
+    tokens: TokenPair

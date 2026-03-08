@@ -1,10 +1,8 @@
 from sqlalchemy import select
 
-from app.db.session import SessionLocal
 from app.modules.auth.models.role import Role
 from app.modules.auth.models.permission import Permission
-from app.modules.users.models import User
-from app.core.security import hash_password
+
 
 PERMISSIONS = [
     "users:read",
@@ -21,7 +19,7 @@ PERMISSIONS = [
     "ai:delete",
 ]
 
-ROLE_MAP = {
+ROLE = {
     "admin": [
         "users:read",
         "users:create",
@@ -52,92 +50,57 @@ ROLE_MAP = {
 
 
 def get_or_create_permission(db, name: str) -> Permission:
-    permission = db.execute(
+    smpt = db.execute(
         select(Permission).where(Permission.name == name)
     ).scalar_one_or_none()
 
-    if permission:
-        return permission
+    if smpt:
+        return smpt
 
-    permission = Permission(name=name)
-    db.add(permission)
+    smpt = Permission(name=name)
+    db.add(smpt)
     db.flush()
-    return permission
+    return smpt
 
 
 def get_or_create_role(db, name: str) -> Role:
-    role = db.execute(
+    smpt = db.execute(
         select(Role).where(Role.name == name)
     ).scalar_one_or_none()
 
-    if role:
-        return role
+    if smpt:
+        return smpt
 
-    role = Role(name=name)
-    db.add(role)
+    smpt = Role(name=name)
+    db.add(smpt)
     db.flush()
-    return role
+    return smpt
 
 
-def get_or_create_admin_user(db) -> User:
-    user = db.execute(
-        select(User).where(User.email == "admin@example.com")
-    ).scalar_one_or_none()
 
-    if user:
-        return user
-
-    user = User(
-        email="admin@example.com",
-        hashed_password=hash_password("Admin123!"),
-        is_active=True,
-        is_superuser=False,
-    )
-    db.add(user)
-    db.flush()
-    return user
-
-
-def main():
-    db = SessionLocal()
+def seed_permissions_and_roles(db: Session) -> None:
     try:
-        permissions_map: dict[str, Permission] = {}
+        permission_map: dict[str, Permission] = {}
 
-        for name in PERMISSIONS:
-            permissions_map[name] = get_or_create_permission(db, name)
+        for permission_name in PERMISSIONS:
+            permission = get_or_create_permission(db, permission_name)
+            permission_map[permission_name] = permission
 
-        for role_name, permission_names in ROLE_MAP.items():
+        for role_name, permission_names in ROLE.items():
             role = get_or_create_role(db, role_name)
 
-            existing = {perm.name for perm in role.permissions}
-            for permission_name in permission_names:
-                if permission_name not in existing:
-                    role.permissions.append(permissions_map[permission_name])
+            missing_permissions = [
+                name for name in permission_names if name not in permission_map
+            ]
+            if missing_permissions:
+                raise ValueError(
+                    f"{role_name} role uchun topilmadi: {missing_permissions}"
+                )
 
-        admin_user = get_or_create_admin_user(db)
-        admin_role = db.execute(
-            select(Role).where(Role.name == "admin")
-        ).scalar_one()
-
-        if admin_role not in admin_user.roles:
-            admin_user.roles.append(admin_role)
+            role.permissions = [permission_map[name] for name in permission_names]
 
         db.commit()
-        print("RBAC seeded successfully")
-        print("admin@example.com / Admin123!")
 
-    finally:
-        db.close()
-
-
-if __name__ == "__main__":
-    main()
-
-
-from fastapi import FastAPI
-
-app = FastAPI(title="Production FastAPI Auth")
-
-@app.get("/")
-def root():
-    return {"message": "ok"}    
+    except Exception:
+        db.rollback()
+        raise
