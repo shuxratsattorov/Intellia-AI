@@ -13,7 +13,7 @@ from app.modules.users.models import User
 from app.db.base import Base, IDMixin, TimestampMixin
 
 
-class UserCredentials(Base, IDMixin, TimestampMixin):
+class UserCredentials(Base):
     __tablename__ = "user_credentials"
 
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -23,7 +23,7 @@ class UserCredentials(Base, IDMixin, TimestampMixin):
         primary_key=True,
     )
 
-    user: Mapped["User"] = relationship(back_populates="credentials")
+    user: Mapped["User"] = relationship("User", back_populates="credentials")
 
 
 class PasswordResetToken(Base, IDMixin, TimestampMixin):

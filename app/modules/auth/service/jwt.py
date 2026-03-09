@@ -1,5 +1,4 @@
 import jwt
-from __future__ import annotations
 from uuid import uuid4
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
@@ -7,8 +6,23 @@ from datetime import datetime, timedelta, timezone
 from app.core.config import settings
 
 
-PRIVATE_KEY = Path(settings.JWT_PRIVATE_KEY).read_text()
-PUBLIC_KEY = Path(settings.JWT_PUBLIC_KEY).read_text()
+def _resolve_key_path(path_str: str) -> Path:
+    """
+    Resolve key path from settings.
+    - If absolute, use as is.
+    - If relative, treat as relative to project root (directory containing the 'app' package).
+    """
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+
+    # jwt.py -> service -> auth -> modules -> app -> project root
+    project_root = Path(__file__).resolve().parents[4]
+    return project_root / path
+
+
+PRIVATE_KEY = _resolve_key_path(settings.JWT_PRIVATE_KEY_PATH).read_text()
+PUBLIC_KEY = _resolve_key_path(settings.JWT_PUBLIC_KEY_PATH).read_text()
 
 
 def create_access_token(*, user_id: int, roles: list[str]) -> tuple[str, datetime, str]:

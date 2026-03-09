@@ -1,13 +1,13 @@
 from __future__ import annotations
 from abc import ABC
-from sqlalchemy.orm import Session
 from sqlalchemy.sql import ColumnElement
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import InstrumentedAttribute
 from typing import Any, Generic, Sequence, TypeVar
-from sqlalchemy import Select, delete, exists, func, select, update
+from sqlalchemy.orm import InstrumentedAttribute, Session
+from sqlalchemy import Select, delete, exists, select, update, func
 
 from app.db.base import Base
+from app.core.errors import NotFoundError
 
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -18,9 +18,6 @@ class BaseRepository(Generic[ModelType], ABC):
 
     def __init__(self, session: Session | AsyncSession = None) -> None:
         self.session: Session | AsyncSession = session
-
-    def query(self) -> Select[tuple[ModelType]]:
-        return select(self.model)
 
     # @abstractmethod
     # def get(self):

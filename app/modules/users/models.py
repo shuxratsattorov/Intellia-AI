@@ -1,9 +1,12 @@
 from __future__ import annotations
-from sqlalchemy import String, Boolean
+from typing import TYPE_CHECKING
+from sqlalchemy import String, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, IDMixin, TimestampMixin
-from app.modules.auth.models.auth import UserCredentials
+if TYPE_CHECKING:
+    from app.modules.auth.models.auth import UserCredentials
+    from app.modules.auth.models.role_permission import Role
 
 
 class User(Base, IDMixin, TimestampMixin):
@@ -14,8 +17,8 @@ class User(Base, IDMixin, TimestampMixin):
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-
     credentials: Mapped["UserCredentials"] = relationship(
+        "UserCredentials",
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
@@ -25,6 +28,12 @@ class User(Base, IDMixin, TimestampMixin):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    roles: Mapped[list["Role"]] = relationship(
+        "Role",
+        secondary="user_roles",
+        back_populates="users",
+        lazy="selectin",
+    )
 
 
 class UserPreferences(Base, IDMixin):
@@ -33,4 +42,9 @@ class UserPreferences(Base, IDMixin):
     theme: Mapped[str] = mapped_column(String(8), default="system")  # dark|light|system
     language: Mapped[str | None] = mapped_column(String(12), nullable=True)
 
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
     user: Mapped["User"] = relationship(back_populates="preferences")

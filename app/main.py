@@ -1,3 +1,5 @@
+import sys
+import asyncio
 import datetime
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
@@ -6,6 +8,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from app.core.config import settings
 from app.db import factory, base as db
+from app.modules.auth.seed_rbac import RBACManager
 
 
 @asynccontextmanager
@@ -71,9 +74,23 @@ async def datatime():
     return datetime.datetime.now(tz=settings.current_time)
 
 
+from app.api.router import routers_prefixs_tags
+
 for router, prefix, tags in routers_prefixs_tags():
     app.include_router(
         router=router,
         prefix=prefix,
         tags=tags
     )
+
+
+async def seed_rbac():
+    async with async_session_maker() as session:
+        manager = RBACManager(session)
+        await manager.seed_all()
+        print("RBAC seeded successfully")
+
+
+if __name__ == "__main__":
+    if "--rbac" in sys.argv:
+        asyncio.run(seed_rbac())

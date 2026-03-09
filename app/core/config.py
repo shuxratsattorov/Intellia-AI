@@ -1,6 +1,6 @@
 import pytz
-import datetime
 from pathlib import Path
+from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,8 +15,8 @@ class Settings(BaseSettings):
 
     # JWT Security
     JWT_ALGORITHM: str
-    JWT_PRIVATE_KEY: str
-    JWT_PUBLIC_KEY: str
+    JWT_PRIVATE_KEY_PATH: str
+    JWT_PUBLIC_KEY_PATH: str
     JWT_ISSUER: str
     JWT_AUDIENCE: str
     JWT_ACCESS_TTL_MINUTES: int
@@ -84,13 +84,12 @@ class Settings(BaseSettings):
         return origins
 
     @property
-    def current_time(time_zone=True):
-        toshkent_tz = pytz.timezone('Asia/Tashkent')
-
-        if time_zone:
-            return datetime.datetime.now(tz=toshkent_tz)
-        else:
-            return datetime.datetime.now()    
+    def current_time(self):
+        return pytz.timezone("Asia/Tashkent")
 
 
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+settings = get_settings()
