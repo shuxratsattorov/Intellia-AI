@@ -1,3 +1,6 @@
+from sqlalchemy.ext.asyncio.session import AsyncSession
+
+
 import sys
 import asyncio
 import datetime
@@ -8,6 +11,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from app.core.config import settings
 from app.db import factory, base as db
+from app.db.session import AsyncSessionLocal
 from app.modules.auth.seed_rbac import RBACManager
 
 
@@ -20,11 +24,22 @@ async def lifespan(app: FastAPI):
         pool_timeout=30
     )
 
-    factory.async_session_factory = async_sessionmaker(
+    factory.async_session_factory = async_sessionmaker[AsyncSession](
         db.async_engine,
         expire_on_commit=False,
         autoflush=True,
     )
+
+    app.state.key_pair = RSAKeyPair.generate(key_size=2048)
+    app.state.jwt = JWTManager(TokenConfig(
+        key_pair=app.state.key_pair,
+        algorithm="RS256",
+        access_token_expire_minutes=15,
+        refresh_token_expire_days=7,
+        issuer="myapp",
+        audience="myapp-users",
+    ))
+    app.state.hasher = PasswordHasher(Argon2Config())
 
     yield
 
@@ -85,10 +100,11 @@ for router, prefix, tags in routers_prefixs_tags():
 
 
 async def seed_rbac():
-    async with async_session_maker() as session:
-        manager = RBACManager(session)
-        await manager.seed_all()
-        print("RBAC seeded successfully")
+    async with AsyncSessionLocal() as session:
+        async with session.begin():
+            manager = RBACManager(session)
+            result = await manager.seed_all()
+            print(result)
 
 
 if __name__ == "__main__":

@@ -2,12 +2,14 @@ from __future__ import annotations
 from sqlalchemy import select
 from datetime import datetime, timezone
 
+from app.main import datatime
 from app.modules.users.models import User
 from app.db.base_repo import AsyncRepository
 from app.modules.auth.models.auth import (
     UserCredentials,
     RefreshToken,
     PasswordResetToken,
+    EmailVerificationToken
 )
 
 
@@ -76,6 +78,16 @@ class RefreshTokenRepository(AsyncRepository[RefreshToken]):
         await self.session.flush()
         return True
 
+    async def create_refresh_token(self, user_id: int, token_jti: str, expires_at: datatime) -> RefreshToken:  
+        rt = RefreshToken(
+                user_id=user_id,
+                token_jti=token_jti,
+                expires_at=expires_at,
+            )
+        self.session.add(rt)
+        await self.session.flush()
+        return rt  
+
 
 class PasswordResetTokenRepository(AsyncRepository[PasswordResetToken]):
     """Repository for PasswordResetToken entity."""
@@ -91,3 +103,22 @@ class PasswordResetTokenRepository(AsyncRepository[PasswordResetToken]):
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+
+
+class EmailVerificationTokenRepository(AsyncRepository[EmailVerificationToken]):
+    model = EmailVerificationToken
+
+    async def create(
+        self, 
+        token: str, 
+        expires_at: datetime, 
+        used: bool
+    ) -> EmailVerificationToken:
+    
+        evt = EmailVerificationToken(
+            token=token, 
+            expires_at=expires_at,  
+            used=used
+    )
+        self.add(evt)
+        await self.session.flush()
