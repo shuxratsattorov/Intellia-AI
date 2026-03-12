@@ -1,4 +1,4 @@
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from sqlalchemy.orm import selectinload
 
 from app.modules.users.models import User
@@ -159,11 +159,14 @@ class UserRepository(AsyncRepository[User]):
         return result.scalar_one_or_none() is not None    
 
 
-class UserRoleRepository:
+class UserRoleRepository(AsyncRepository[UserRole]):
     model = UserRole
 
     async def assign_role(self, user_id: int, role_id: int) -> UserRole:
-        user_role = UserRole(user_id=user_id, role_id=role_id)
+        user_role = UserRole(
+            user_id=user_id, 
+            role_id=role_id
+        )
         self.session.add(user_role)
         await self.session.flush()
         return user_role
@@ -189,7 +192,7 @@ class UserRoleRepository:
         return result.scalar_one_or_none() is not None
 
 
-class RolePermissionRepository:
+class RolePermissionRepository(AsyncRepository[RolePermission]):
     model = RolePermission
 
     async def assign_permission(self, role_id: int, permission_id: int) -> RolePermission:

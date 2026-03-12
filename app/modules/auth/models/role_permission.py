@@ -7,7 +7,7 @@ from app.db.base import Base, IDMixin
 class Permission(Base, IDMixin):
     __tablename__ = "permissions"
 
-    name: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
 
     roles = relationship(
         "Role",
@@ -17,36 +17,10 @@ class Permission(Base, IDMixin):
     )
 
 
-class RolePermission(Base, IDMixin):
-    __tablename__ = "role_permissions"
-
-    role_id: Mapped[int] = mapped_column(
-        ForeignKey("roles.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-    permission_id: Mapped[int] = mapped_column(
-        ForeignKey("permissions.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-
-
-class UserRole(Base, IDMixin):
-    __tablename__ = "user_roles"
-
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-    role_id: Mapped[int] = mapped_column(
-        ForeignKey("roles.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-
-
 class Role(Base, IDMixin):
     __tablename__ = "roles"
 
-    name: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
 
     permissions = relationship(
         "Permission",
@@ -60,4 +34,30 @@ class Role(Base, IDMixin):
         secondary="user_roles",
         back_populates="roles",
         lazy="selectin",
+    )
+
+
+class RolePermission(Base):
+    __tablename__ = "role_permissions"
+
+    role_id: Mapped[int] = mapped_column(
+        ForeignKey("roles.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    permission_id: Mapped[int] = mapped_column(
+        ForeignKey("permissions.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+
+class UserRole(Base):
+    __tablename__ = "user_roles"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    role_id: Mapped[int] = mapped_column(
+        ForeignKey("roles.id", ondelete="CASCADE"),
+        primary_key=True,
     )

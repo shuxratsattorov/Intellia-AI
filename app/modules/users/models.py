@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from sqlalchemy import String, Boolean, ForeignKey
+from datetime import datetime
+from typing import TYPE_CHECKING, Optional
+from sqlalchemy import String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, IDMixin, TimestampMixin
@@ -15,7 +16,12 @@ class User(Base, IDMixin, TimestampMixin):
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     full_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
 
     credentials: Mapped["UserCredentials"] = relationship(
         "UserCredentials",
@@ -34,6 +40,9 @@ class User(Base, IDMixin, TimestampMixin):
         back_populates="users",
         lazy="selectin",
     )
+
+    def __repr__(self) -> str:
+        return f"<User id={self.id} email={self.email!r}>"
 
 
 class UserPreferences(Base, IDMixin):

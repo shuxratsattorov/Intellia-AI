@@ -1,11 +1,14 @@
 from __future__ import annotations
 from datetime import datetime
 from sqlalchemy import (
+    Boolean,
     Index,
+    Integer,
     String,
     DateTime,
     ForeignKey,
     UniqueConstraint,
+    null,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -62,7 +65,7 @@ class OAuthAccount(Base, IDMixin, TimestampMixin):
     user: Mapped["User"] = relationship()
 
 
-class RefreshToken(Base, IDMixin, TimestampMixin):
+class RefreshToken(Base, IDMixin):
     __tablename__ = "refresh_tokens"
     __table_args__ = (
         Index("ix_refresh_user_active", "user_id", "revoked_at"),
@@ -78,5 +81,21 @@ class RefreshToken(Base, IDMixin, TimestampMixin):
         ForeignKey("users.id", ondelete="CASCADE"),
         index=True,
         nullable=False,
+    )
+    user: Mapped["User"] = relationship()
+
+
+class EmailVerificationToken(Base, IDMixin):
+    __tablename__ = "email_verification_tokens"
+
+    token: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    used: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False
     )
     user: Mapped["User"] = relationship()

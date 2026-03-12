@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.modules.users.models import User
 from app.modules.auth.models.auth import UserCredentials, RefreshToken, PasswordResetToken
 from app.modules.auth.models.role_permission import Role
@@ -24,9 +25,6 @@ from app.core.errors import (
     AuthenticationError,
     TokenError,
 )
-
-
-DEFAULT_ROLE_NAME = "user"
 
 
 def _format_expires(exp: datetime) -> str:
@@ -54,24 +52,15 @@ class AuthService:
         if await self._user_repo.exists_by_email(email):
             raise RegistrationError("A user with this email already exists")
 
-        # default_role = await self._role_repo.get_by_name(DEFAULT_ROLE_NAME)
-        # if not default_role:
-        #     raise RegistrationError("Default role 'user' is not configured")
+        default_role = await self._role_repo.get_by_name(settings.DEFAULT_ROLE_NAME)
+        if not default_role:
+            raise RegistrationError("Default role 'user' is not configured")
 
         user = await self._user_repo.create_user(email=email, is_active=True)
         await self._credentials_repo.create_password_hash(
             user_id=user.id,
             password_hash=self._password_hash.hash_password(password),
         )
-
-        # Ensure default role exists and assign it to the user
-        default_role = await self._role_repo.get_by_name(DEFAULT_ROLE_NAME)
-        if not default_role:
-            default_role = await self._role_repo.create(
-                {"name": DEFAULT_ROLE_NAME},
-                refresh=True,
-            )
-
         await self._user_role_repo.assign_role(user_id=user.id, role_id=default_role.id)
 
         access_token, access_exp, _ = jwt.create_access_token(
@@ -80,12 +69,12 @@ class AuthService:
         )
         refresh_token, refresh_exp, jti = jwt.create_refresh_token(user_id=user.id)
 
-        rt = RefreshToken(
-            user_id=user.id,
-            token_jti=jti,
-            expires_at=refresh_exp,
+        await self._refresh_repo.create_refresh_token(
+            user_id=user.id, 
+            token_jti=jti, 
+            expires_at=refresh_exp
         )
-        self.session.add(rt)
+
         await self.session.commit()
         await self.session.refresh(user)
 
