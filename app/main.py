@@ -1,17 +1,22 @@
-from sqlalchemy.ext.asyncio.session import AsyncSession
-
-
 import sys
 import asyncio
-import datetime
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
+from app.core.security import (
+    Argon2Config, 
+    PasswordHasher, 
+    TokenConfig, 
+    RSAKeyPair, 
+    JWTManager
+)
 from app.core.config import settings
 from app.db import factory, base as db
 from app.db.session import AsyncSessionLocal
+from app.api.router import routers_prefixs_tags
 from app.modules.auth.seed_rbac import RBACManager
 
 
@@ -84,13 +89,6 @@ app.add_middleware(
 #     return await call_next(request)
 
 
-@app.get('/now/datetime',)
-async def datatime():
-    return datetime.datetime.now(tz=settings.current_time)
-
-
-from app.api.router import routers_prefixs_tags
-
 for router, prefix, tags in routers_prefixs_tags():
     app.include_router(
         router=router,
@@ -110,3 +108,8 @@ async def seed_rbac():
 if __name__ == "__main__":
     if "--rbac" in sys.argv:
         asyncio.run(seed_rbac())
+
+
+@app.get("/health", tags=["infra"])
+async def health():
+    return {"status": "ok", "version": app.version}         

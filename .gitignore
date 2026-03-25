@@ -14,3 +14,8 @@ __pycache__/
 test.py
 
 app/modules/auth/keys/
+
+
+.session
+.db
+auth_module/

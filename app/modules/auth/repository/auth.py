@@ -108,6 +108,194 @@ class PasswordResetTokenRepository(AsyncRepository[PasswordResetToken]):
 class EmailVerificationTokenRepository(AsyncRepository[EmailVerificationToken]):
     model = EmailVerificationToken
 
+    # -------------------------
+    # CREATE
+    # -------------------------
+
+    async def create(
+        self,
+        user_id: int,
+        code_hash: str,
+        purpose: str,
+        expires_at: datatime,
+    ) -> EmailVerificationToken:
+        token = EmailVerificationToken(
+            user_id=user_id,
+            code_hash=code_hash,
+            purpose=purpose,
+            expires_at=expires_at,
+        )
+        self.session.add(token)
+        await self.session.flush()
+        return token
+
+    # -------------------------
+    # GET
+    # -------------------------
+
+    async def get_by_id(self, token_id: int) -> Optional[EmailVerificationToken]:
+        result = await self.session.execute(
+            select(EmailVerificationToken).where(
+                EmailVerificationToken.id == token_id
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_active_token(
+        self,
+        user_id: int,
+        purpose: str,
+    ) -> Optional[EmailVerificationToken]:
+        result = await self.session.execute(
+            select(EmailVerificationToken).where(
+                and_(
+                    EmailVerificationToken.user_id == user_id,
+                    EmailVerificationToken.purpose == purpose,
+                    EmailVerificationToken.used == False,
+                    EmailVerificationToken.expires_at > datetime.now(timezone.utc),
+                )
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_code(
+        self,
+        code_hash: str,
+        purpose: str,
+    ) -> Optional[EmailVerificationToken]:
+        result = await self.session.execute(
+            select(EmailVerificationToken).where(
+                and_(
+                    EmailVerificationToken.code_hash == code_hash,
+                    EmailVerificationToken.purpose == purpose,
+                )
+            )
+        )
+        return result.scalar_one_or_none()
+
+    # -------------------------
+    # UPDATE
+    # -------------------------
+
+    async def mark_as_used(
+        self,
+        token: EmailVerificationToken,
+    ) -> EmailVerificationToken:
+        token.used = True
+        token.used_at = datetime.now(timezone.utc)
+        await self.session.flush()
+        return token
+
+    async def increment_attempts(
+        self,
+        token: EmailVerificationToken,
+    ) -> EmailVerificationToken:
+        """Noto'g'ri urinish — attempts ni oshirish"""
+        token.attempts += 1
+        await self.session.flush()
+        return token
+
+    async def set_cooldown(
+        self,
+        token: EmailVerificationToken,
+        cooldown_minutes: int = 5,
+    ) -> EmailVerificationToken:
+        """Ko'p noto'g'ri urinishdan keyin cooldown o'rnatish"""
+        token.cooldown_until = datetime.now(timezone.utc) + timedelta(minutes=cooldown_minutes)
+        await self.session.flush()
+        return token
+
+    # -------------------------
+    # DELETE
+    # -------------------------
+
+    async def delete(self, token: EmailVerificationToken) -> None:
+        await self.session.delete(token)
+        await self.session.flush()
+
+    async def delete_expired(self, user_id: int, purpose: TokenPurpose) -> None:
+        """Foydalanuvchining eski tokenlarini o'chirish"""
+        result = await self.session.execute(
+            select(EmailVerificationToken).where(
+                and_(
+                    EmailVerificationToken.user_id == user_id,
+                    EmailVerificationToken.purpose == purpose,
+                    EmailVerificationToken.expires_at < datetime.now(timezone.utc),
+                )
+            )
+        )
+        tokens = result.scalars().all()
+        for token in tokens:
+            await self.session.delete(token)
+        await self.session.flush()
+
+    # -------------------------
+    # VALIDATION
+    # -------------------------
+
+    def is_expired(self, token: EmailVerificationToken) -> bool:
+        return token.expires_at < datetime.now(timezone.utc)
+
+    def is_on_cooldown(self, token: EmailVerificationToken) -> bool:
+        if token.cooldown_until is None:
+            return False
+        return token.cooldown_until > datetime.now(timezone.utc)
+
+    def is_max_attempts_reached(
+        self,
+        token: EmailVerificationToken,
+        max_attempts: int = 5,
+    ) -> bool:
+        return token.attempts >= max_attempts
+
+    def verify_code(
+        self,
+        token: EmailVerificationToken,
+        code: str,
+    ) -> bool:
+        return token.code_hash == self._hash_code(code)
+
+    # -------------------------
+    # PRIVATE
+    # -------------------------
+
+    @staticmethod
+    def _hash_code(code: str) -> str:
+        return hashlib.sha256(code.encode()).hexdigest()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    async def attempts(self, user_id: int, attempts: int) -> EmailVerificationToken:
+        attempts = EmailVerificationToken(
+            attempts=attempts
+        )
+        self.session.add(attempts)
+        await self.session.flush()
+        return attempts
+
+    async def get_attempts(self, attempts: int)    
+
     async def create(
         self, 
         token: str, 
@@ -121,4 +309,4 @@ class EmailVerificationTokenRepository(AsyncRepository[EmailVerificationToken]):
             used=used
     )
         self.add(evt)
-        await self.session.flush()
+        await self.session.flush()       
