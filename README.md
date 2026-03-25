@@ -5,14 +5,14 @@ Feature-based (modules)
 ## Tech stack
 - Python (FastAPI)
 - Async SQLAlchemy + Alembic migrations
-- JWT auth
+- Auth: JWT, RS256, Argon2id + HMAS sold, RBAC
 - Redis (cache / rate limit)
 - Docker
 
 ## Project structure (feature-based modules)
 
 ```text
-apps/api/
+INTELLIA APP/
 ├─ app/
 │  ├─ main.py                       # create_app + router include
 │  ├─ asgi.py                       # prod entry

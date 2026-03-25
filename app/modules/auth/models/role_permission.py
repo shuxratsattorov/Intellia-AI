@@ -1,7 +1,7 @@
 from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, IDMixin
+from app.db.base import Base, IDMixin, DateTime
 
 
 class Permission(Base, IDMixin):
@@ -50,7 +50,7 @@ class RolePermission(Base):
     )
 
 
-class UserRole(Base):
+class UserRole(Base, DateTime):
     __tablename__ = "user_roles"
 
     user_id: Mapped[int] = mapped_column(

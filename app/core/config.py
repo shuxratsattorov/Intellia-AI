@@ -5,6 +5,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=(Path(__file__).resolve().parents[2] / ".env"), 
+        extra="allow",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        )
+
     # App
     APP_NAME: str
     ENV: str
@@ -65,11 +72,6 @@ class Settings(BaseSettings):
     @property
     def DATABASE_URL_asyncpg(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-
-    model_config = SettingsConfigDict(
-        env_file=(Path(__file__).resolve().parents[2] / ".env"), 
-        extra="allow"
-        )
 
     @property
     def cors_origins(self) -> list[str]:
