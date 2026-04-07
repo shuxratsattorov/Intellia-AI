@@ -16,6 +16,6 @@ test.py
 app/modules/auth/keys/
 
 
-.session
+*.session
 *.db
 auth_module/
