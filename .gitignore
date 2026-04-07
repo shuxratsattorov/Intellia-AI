@@ -17,5 +17,5 @@ app/modules/auth/keys/
 
 
 .session
-.db
+*.db
 auth_module/
