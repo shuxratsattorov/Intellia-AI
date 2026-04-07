@@ -1,4 +1,3 @@
-import jwt
 import hmac
 import uuid
 import logging
@@ -12,6 +11,7 @@ from argon2.exceptions import (
 )
 from argon2 import PasswordHasher
 from dataclasses import dataclass, field
+from authlib.jose import jwt, JsonWebKey
 from datetime import datetime, timedelta, timezone
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -172,6 +172,7 @@ class TokenConfig:
  
 @dataclass
 class TokenPayload:
+    iss: str
     sub: int
     type: TokenType
     jti: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -182,12 +183,13 @@ class TokenPayload:
  
     def to_dict(self) -> dict:
         return {
+            "iss": self.iss,
             "sub": self.sub,
-            "type": self.type.value,
+            "typ": self.type.value,
             "jti": self.jti,
             "iat": self.iat.timestamp(),
             "exp": self.exp.timestamp() if self.exp else None,
-            "roles": self.roles,
+            "rol": self.roles,
             **self.extra,
         }
   
@@ -206,10 +208,10 @@ class JWTManager:
     ) -> str:
         payload = TokenPayload(
             sub=user_id,
-            type=TokenType.ACCESS,
+            typ=TokenType.ACCESS,
             iat=self._now,
             exp=self._now + timedelta(minutes=self._config.access_token_expire_minutes),
-            roles=roles or [],
+            rol=roles or [],
             extra=extra or {},
         )
         return self._encode(payload)
@@ -217,7 +219,7 @@ class JWTManager:
     def create_refresh_token(self, user_id: str) -> str:
         payload = TokenPayload(
             sub=user_id,
-            type=TokenType.REFRESH,
+            typ=TokenType.REFRESH,
             iat=self._now,
             exp=self._now + timedelta(days=self._config.refresh_token_expire_days),
         )
