@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/intellia-backend
+  IMAGE_NAME: intellia-backend
 
 jobs:
   # ── JOB 1: TEST & LINT ──────────────────────────────────────
@@ -115,7 +115,7 @@ jobs:
             set -e
 
             echo "📦 Pulling latest code..."
-            cd /opt/zametka
+            cd /opt/intellia
             git pull origin master
 
             echo "🐳 Pulling latest Docker images..."
