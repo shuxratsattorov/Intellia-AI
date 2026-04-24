@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASS: str
 
+    # Redis
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_DB: int | None
+    REDIS_PASSWORD: str | None
+    DECODE_RESPONSES: bool
+
     # OpenAI
     OPENAI_API_KEY: str
     OPENAI_MODEL: str
@@ -58,16 +65,14 @@ class Settings(BaseSettings):
     SMTP_PASS: str
     SMTP_FROM: str
 
-    # Storage
-    STORAGE_DRIVER: str
-    STORAGE_LOCAL_DIR: str
-    S3_BUCKET: str
-    S3_REGION: str
-    S3_ACCESS_KEY: str
-    S3_SECRET_KEY: str
-
     DEFAULT_ROLE_NAME: str
 
+    TIME_COST: int
+    MEMORY_COST: int
+    PARALLELISM: int
+    HASH_LEN: int
+    SALT_LEN: int
+    PEPPER: str
 
     @property
     def DATABASE_URL_asyncpg(self) -> str:

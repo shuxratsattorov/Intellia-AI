@@ -25,6 +25,7 @@ from app.core.errors import (
     AuthenticationError,
     TokenError,
 )
+from app.infrastructure.cache.cache import RedisCache
 
 
 def _format_expires(exp: datetime) -> str:
@@ -47,21 +48,32 @@ class AuthService:
         self._role_repo = RoleRepository(session)
         self._user_role_repo = UserRoleRepository(session)
         self._password_hash = password_hash or PasswordHash(Argon2idConfig.from_settings())
+        self._redis = RedisCache()
+
 
     async def register(self, email: str, password: str) -> tuple[User, TokenPair]:
-        if await self._user_repo.exists_by_email(email):
+        if await self._user_repo.exists_by_email(email, is_verified=True):
             raise RegistrationError("A user with this email already exists")
 
         default_role = await self._role_repo.get_by_name(settings.DEFAULT_ROLE_NAME)
         if not default_role:
             raise RegistrationError("Default role 'user' is not configured")
 
-        user = await self._user_repo.create_user(email=email, is_active=True)
+        user = await self._user_repo.create_user(email=email, is_active=True, is_verified=False)
         await self._credentials_repo.create_password_hash(
             user_id=user.id,
             password_hash=self._password_hash.hash_password(password),
         )
         await self._user_role_repo.assign_role(user_id=user.id, role_id=default_role.id)
+
+        user_id = await self._user_repo.get_id_by_email(email=email)
+
+        otp = str(secrets.randbelow(90000) + 10000)
+
+        await self._redis.set_otp(flow="login", user_id=user_id, otp=otp)
+
+        
+
 
         access_token, access_exp, _ = jwt.create_access_token(
             user_id=user.id,

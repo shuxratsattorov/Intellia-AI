@@ -56,15 +56,15 @@ INTELLIA APP/
 │  │  │  ├─ schemas.py              # request/response DTO
 │  │  │  ├─ service.py              # business logic
 │  │  │  ├─ repository.py           # db access
-│  │  │  ├─ models.py               # UserCredentials / ResetToken tables
+│  │  │  ├─ models.py               # UserCredentials / PasswordResetToken / OAuthAccount / RefreshToken / EmailVerificationToken
 │  │  │  └─ deps.py                 # auth-specific deps
 │  │  │
 │  │  ├─ users/
-│  │  │  ├─ api.py                  # profile endpoints
-│  │  │  ├─ schemas.py
+│  │  │  ├─ api.py                  # /profile routes: me/ profile endpoints
+│  │  │  ├─ schemas.py              # request/response DTO
 │  │  │  ├─ service.py              # edit profile, preferences (theme)
-│  │  │  ├─ repository.py
-│  │  │  └─ models.py
+│  │  │  ├─ repository.py           # db access
+│  │  │  └─ models.py               # User / UserPreferences
 │  │  │
 │  │  ├─ notifications/
 │  │  │  ├─ api.py                  # list/mark read/unread count

@@ -7,10 +7,12 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASS: ${POSTGRES_PASS}
-      POSTGRES_NAME: ${POSTGRES_NAME}
-    env_file: 
-      - .env  
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    env_file:
+      - ../.env  
+      # - path: .env
+      #   required: false
     ports:
       - 15432:5432 
     networks:
@@ -18,7 +20,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 60s
       timeout: 10s
       retries: 5
@@ -27,30 +29,74 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
-      
+
+  # ── PostgreSQL Admin ─────────────────────────────────── 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: postgres_admin
+    ports:
+      - 5050:5050
+    networks:
+      - intellia_net       
+
+  # ── Redis Cache ───────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: intellia_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "16379:6379"
+    networks:
+      - intellia_net
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"      
+
+  # ── Redis UI ───────────────────────────────────────
+  redis_gui:
+    image: redis/redisinsight
+    container_name: redis_gui
+    restart: unless-stopped
+    ports:
+      - 5540:5540
+    networks:
+      - intellia_net   
 
   # ── API Backend ───────────────────────────────────────
   api:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
       target: runtime
     container_name: intellia_api
     restart: unless-stopped
     environment:
       POSTGRES_HOST: db
+      REDIS_HOST: redis
       DEBUG: ${DEBUG:-false}
     env_file:
-      - .env  
-    port:
-      -443:443
+      - ../.env
+    ports:
+      - "443:443"
     networks:
       - intellia_net
     volumes:
-    - ./media:/app/media   
+      - ./media:/app/media   
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy  
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 60s
@@ -86,6 +132,8 @@ services:
 volumes:
   postgres_data:
     driver: local
+  redis_data:
+    driver: local  
 
 networks:
   intellia_net:
