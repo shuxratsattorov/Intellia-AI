@@ -51,10 +51,8 @@ class RefreshToken(Base, IDMixin):
         Index("ix_refresh_user_active", "user_id", "revoked_at"),
     )
 
-    token_jti: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
-    ip_address: Mapped[str] = mapped_column(String(64), default="", nullable=False)
-    user_agent: Mapped[str] = mapped_column(String(256), default="", nullable=False)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    token: Mapped[str] = mapped_column(String(256))
+    jti: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     user_id: Mapped[int] = mapped_column(
