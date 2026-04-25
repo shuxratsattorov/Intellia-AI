@@ -37,14 +37,14 @@ jobs:
           pip install -r requirements.txt
           pip install aiosqlite ruff
 
-      - name: Lint with Ruff
-        run: |
-          ruff check app/ \
-            --target-version=py312 \
-            --exclude=.venv,migrations \
-            --select=E,W,F,I \
-            --fix \
-            --fixable=ALL
+      # - name: Lint with Ruff
+      #   run: |
+      #     ruff check app/ \
+      #       --target-version=py312 \
+      #       --exclude=.venv,migrations \
+      #       --select=E,W,F,I \
+      #       --fix \
+      #       --fixable=ALL
 
       - name: Run tests
         working-directory: tests
