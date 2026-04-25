@@ -13,7 +13,7 @@ env:
 jobs:
   # ── JOB 1: TEST & LINT ──────────────────────────────────────
   test:
-    name: 🧪 Test & Lint
+    name: 🧪 Test & Lint aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     runs-on: ubuntu-latest
 
     steps:
