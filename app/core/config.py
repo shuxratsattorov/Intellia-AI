@@ -25,12 +25,11 @@ class Settings(BaseSettings):
     JWT_PRIVATE_KEY_PATH: str
     JWT_PUBLIC_KEY_PATH: str
     JWT_ISSUER: str
-    JWT_AUDIENCE: str
     JWT_ACCESS_TTL_MINUTES: int
     JWT_REFRESH_TTL_DAYS: int
 
     # Password Hash
-    PASS_PEPPER: str
+    PEPPER: str
     TIME_COST: int
     MEMORY_COST: int
     PARALLELISM: int
@@ -66,13 +65,6 @@ class Settings(BaseSettings):
     SMTP_FROM: str
 
     DEFAULT_ROLE_NAME: str
-
-    TIME_COST: int
-    MEMORY_COST: int
-    PARALLELISM: int
-    HASH_LEN: int
-    SALT_LEN: int
-    PEPPER: str
 
     @property
     def DATABASE_URL_asyncpg(self) -> str:
