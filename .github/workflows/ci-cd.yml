@@ -2,7 +2,7 @@ name: Intellia CI/CD Pipeline
 
 on:
   push:
-    branches: [master, production]
+    branches: [rollback-commit, production]
   pull_request:
     branches: [production]
 
