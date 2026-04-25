@@ -4,7 +4,7 @@ on:
   push:
     branches: [rollback-commit, production]
   pull_request:
-    branches: [production]
+    branches: [rollback-commit, production]
 
 env:
   REGISTRY: ghcr.io
