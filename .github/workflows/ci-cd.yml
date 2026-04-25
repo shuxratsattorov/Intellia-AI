@@ -38,8 +38,13 @@ jobs:
           pip install aiosqlite ruff
 
       - name: Lint with Ruff
-        working-directory: /
-        run: ruff check app/ --select=E,W,F --ignore=E501
+        run: |
+          ruff check app/ \
+            --target-version=py312 \
+            --exclude=.venv,migrations \
+            --select=E,W,F,I \
+            --fix \
+            --fixable=ALL
 
       - name: Run tests
         working-directory: tests
