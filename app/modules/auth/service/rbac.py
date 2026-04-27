@@ -1,8 +1,6 @@
-import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import AsyncSessionLocal
-from app.modules.auth.repository.role_permission import (
+from app.modules.auth.repository.rbac import (
     RoleRepository,
     PermissionRepository, 
     RolePermissionRepository)
@@ -103,13 +101,3 @@ class RBACManager:
             "created_roles": created_roles,
             "created_role_permissions": created_role_permissions,
         }
-
-
-async def main():
-    async with AsyncSessionLocal() as session:
-        manager = RBACManager(session)
-        result = await manager.seed_all()
-        print(result)
-
-if __name__ == "__main__":
-    asyncio.run(main())

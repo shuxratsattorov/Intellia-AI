@@ -3,7 +3,7 @@ from sqlalchemy.orm import selectinload
 
 from app.modules.users.models import User
 from app.db.base_repo import AsyncRepository
-from app.modules.auth.models.role_permission import (
+from app.modules.auth.models.rbac import (
     Permission,
     Role,
     UserRole,
