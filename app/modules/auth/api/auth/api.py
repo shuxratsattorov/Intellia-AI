@@ -1,56 +1,56 @@
-"""Auth API – request/response handling only."""
+# """Auth API – request/response handling only."""
 
-from fastapi import APIRouter, Depends, Request, HTTPException
+# from fastapi import APIRouter, Depends, Request, HTTPException
 
-from app.modules.auth.deps import get_auth_service
-from app.modules.auth.service.auth import AuthService
-from app.modules.auth.schemas.schemas import (
-    RegisterRequest,
-    RegisterResponse,
-    LoginRequest,
-    LoginResponse,
-    RefreshRequest,
-    ForgotPasswordRequest,
-    ResetPasswordRequest,
-    TokenPair,
-    UserOut,
-    MessageResponse,
-)
-from app.core.errors import (
-    RegistrationError,
-    AuthenticationError,
-    TokenError,
-)
-
-
-router = APIRouter()
+# from app.modules.auth.deps import get_auth_service
+# from app.modules.auth.service.auth import AuthService
+# from app.modules.auth.schemas.schemas import (
+#     RegisterRequest,
+#     RegisterResponse,
+#     LoginRequest,
+#     LoginResponse,
+#     RefreshRequest,
+#     ForgotPasswordRequest,
+#     ResetPasswordRequest,
+#     TokenPair,
+#     UserOut,
+#     MessageResponse,
+# )
+# from app.core.errors import (
+#     RegistrationError,
+#     AuthenticationError,
+#     TokenError,
+# )
 
 
-def _user_to_out(user) -> UserOut:
-    """Map User model to UserOut DTO."""
-    roles = [r.name for r in user.roles] if user.roles else []
-    return UserOut(id=user.id, email=user.email, is_active=user.is_active, roles=roles)
+# router = APIRouter()
 
 
-@router.post("/register", response_model=RegisterResponse)
-async def register(
-    body: RegisterRequest,
-    auth_service: AuthService = Depends(get_auth_service),
-) -> RegisterResponse:
-    """Register a new user."""
-    try:
-        user, tokens = await auth_service.register(
-            email=body.email,
-            password=body.password,
-        )
-    except RegistrationError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message)
+# def _user_to_out(user) -> UserOut:
+#     """Map User model to UserOut DTO."""
+#     roles = [r.name for r in user.roles] if user.roles else []
+#     return UserOut(id=user.id, email=user.email, is_active=user.is_active, roles=roles)
 
 
-    return RegisterResponse(
-        user=_user_to_out(user),
-        tokens=tokens,
-    )
+# @router.post("/register", response_model=RegisterResponse)
+# async def register(
+#     body: RegisterRequest,
+#     auth_service: AuthService = Depends(get_auth_service),
+# ) -> RegisterResponse:
+#     """Register a new user."""
+#     try:
+#         user, tokens = await auth_service.register(
+#             email=body.email,
+#             password=body.password,
+#         )
+#     except RegistrationError as e:
+#         raise HTTPException(status_code=e.status_code, detail=e.message)
+
+
+#     return RegisterResponse(
+#         user=_user_to_out(user),
+#         tokens=tokens,
+#     )
 
 
 # @router.post("/login", response_model=LoginResponse)

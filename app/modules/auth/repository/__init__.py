@@ -1,10 +1,7 @@
-"""Auth repository layer."""
-
 from app.modules.auth.repository.auth import (
     UserRepository,
     UserCredentialsRepository,
-    RefreshTokenRepository,
-    PasswordResetTokenRepository,
+    JWTTokenRepository
 )
 from app.modules.auth.repository.role_permission import (
     PermissionRepository,
@@ -20,4 +17,5 @@ __all__ = [
     "PermissionRepository",
     "RoleRepository",
     "UserRoleRepository",
+    "JWTTokenRepository"
 ]

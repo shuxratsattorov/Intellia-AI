@@ -10,9 +10,8 @@ from app.core.config import settings
 from app.db.base import Base
 from app.modules.auth.models.auth import (
     UserCredentials,
-    PasswordResetToken,
     OAuthAccount,
-    RefreshToken,
+    RefreshToken
 )
 from app.modules.auth.models.role_permission import (
     Permission,
@@ -20,7 +19,7 @@ from app.modules.auth.models.role_permission import (
     UserRole,
     Role,
 )
-from app.modules.users.models import User
+from app.modules.users.models import User, UserPreferences
 
 config = context.config
 

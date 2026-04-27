@@ -1,4 +1,4 @@
-from sqlalchemy import select, delete, func
+from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 
 from app.modules.users.models import User

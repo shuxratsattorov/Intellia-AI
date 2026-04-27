@@ -61,16 +61,9 @@ class TokenPair(BaseModel):
     refresh_expires_at: str
 
 
-class UserOut(BaseModel):
-    id: int
-    email: EmailStr
-    is_active: bool
-    roles: list[str]
-
-
 class RegisterResponse(BaseModel):
-    user: UserOut
-    tokens: TokenPair
+    email: EmailStr
+    is_verified: bool
 
 
 class LoginResponse(BaseModel):
@@ -79,3 +72,21 @@ class LoginResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+class RefreshRequest(BaseModel):
+    token: str
+
+
+class RefreshResponse(BaseModel):
+    access_token: str
+    type: str
+    exp: int  
+
+
+class RevokeRequest(BaseModel):
+    token: str 
+
+
+class MessegeResponse(BaseModel):
+    message: str = "success"
