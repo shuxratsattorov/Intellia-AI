@@ -6,17 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-from app.core.security import (
-    Argon2Config, 
-    PasswordHasher, 
-    TokenConfig, 
-    RSAKeyPair, 
-    JWTManager
-)
 from app.core.config import settings
 from app.db import factory, base as db
 from app.db.session import AsyncSessionLocal
-from app.api.router import routers_prefixs_tags
+from app.core.routers import routers_prefixs_tags
 from app.modules.auth.seed_rbac import RBACManager
 
 
@@ -34,17 +27,6 @@ async def lifespan(app: FastAPI):
         expire_on_commit=False,
         autoflush=True,
     )
-
-    app.state.key_pair = RSAKeyPair.generate(key_size=2048)
-    app.state.jwt = JWTManager(TokenConfig(
-        key_pair=app.state.key_pair,
-        algorithm="RS256",
-        access_token_expire_minutes=15,
-        refresh_token_expire_days=7,
-        issuer="myapp",
-        audience="myapp-users",
-    ))
-    app.state.hasher = PasswordHasher(Argon2Config())
 
     yield
 

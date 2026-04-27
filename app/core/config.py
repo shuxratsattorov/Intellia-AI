@@ -1,6 +1,7 @@
 import pytz
 from pathlib import Path
 from functools import lru_cache
+# from urllib.parse import quote_plus
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -40,35 +41,38 @@ class Settings(BaseSettings):
     # Database
     DB_HOST: str
     DB_PORT: int
-    DB_NAME: str
-    DB_USER: str
-    DB_PASS: str
+    POSTGRES_DB: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
 
-    # Redis
-    REDIS_HOST: str
-    REDIS_PORT: int
-    REDIS_DB: int | None
-    REDIS_PASSWORD: str | None
-    DECODE_RESPONSES: bool
+    # # Redis
+    # REDIS_HOST: str
+    # REDIS_PORT: int
+    # REDIS_DB: int | None
+    # REDIS_PASSWORD: str | None
+    # DECODE_RESPONSES: bool
 
-    # OpenAI
-    OPENAI_API_KEY: str
-    OPENAI_MODEL: str
-    OPENAI_TEMPERATURE: float
-    OPENAI_MAX_TOKENS: int
+    # # OpenAI
+    # OPENAI_API_KEY: str
+    # OPENAI_MODEL: str
+    # OPENAI_TEMPERATURE: float
+    # OPENAI_MAX_TOKENS: int
 
-    # Email
-    SMTP_HOST: str
-    SMTP_PORT: int
-    SMTP_USER: str
-    SMTP_PASS: str
-    SMTP_FROM: str
+    # # Email
+    # SMTP_HOST: str
+    # SMTP_PORT: int
+    # SMTP_USER: str
+    # SMTP_PASS: str
+    # SMTP_FROM: str
 
     DEFAULT_ROLE_NAME: str
 
     @property
     def DATABASE_URL_asyncpg(self) -> str:
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return (
+        f"postgresql+asyncpg://{self.POSTGRES_USER}:"
+        f"{self.POSTGRES_PASSWORD}@{self.DB_HOST}:"
+        f"{self.DB_PORT}/{self.POSTGRES_DB}")
 
     @property
     def cors_origins(self) -> list[str]:

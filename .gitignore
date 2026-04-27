@@ -12,6 +12,8 @@ venv/
 test.py
 
 app/modules/auth/keys/
+migrations/
+alembic/versions/
 
 
 *.session
