@@ -1,7 +1,5 @@
-import pytz
 from pathlib import Path
 from functools import lru_cache
-# from urllib.parse import quote_plus
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,18 +8,19 @@ class Settings(BaseSettings):
         env_file=(Path(__file__).resolve().parents[2] / ".env"), 
         extra="allow",
         env_file_encoding="utf-8",
-        case_sensitive=False,
-        )
+        case_sensitive=False
+    )
 
-    # App
+    # APP
     APP_NAME: str
     ENV: str
     DEBUG: bool
+    DEFAULT_ROLE: str
 
     # CORS
     CORS_ORIGINS: list
 
-    # JWT Security
+    # JWT (RSA256)
     JWT_ALGORITHM: str
     JWT_PRIVATE_KEY_PATH: str
     JWT_PUBLIC_KEY_PATH: str
@@ -29,7 +28,7 @@ class Settings(BaseSettings):
     JWT_ACCESS_TTL_MINUTES: int
     JWT_REFRESH_TTL_DAYS: int
 
-    # Password Hash
+    # PASSWORD HASH (Argon2)
     PEPPER: str
     TIME_COST: int
     MEMORY_COST: int
@@ -38,19 +37,19 @@ class Settings(BaseSettings):
     SALT_LEN: int
     ENCODING: str
 
-    # Database
+    # DATABASE (Posgtresql)
     DB_HOST: str
     DB_PORT: int
     POSTGRES_DB: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
 
-    # # Redis
-    # REDIS_HOST: str
-    # REDIS_PORT: int
-    # REDIS_DB: int | None
-    # REDIS_PASSWORD: str | None
-    # DECODE_RESPONSES: bool
+    # CACHE (Redis)
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_DB: int | None
+    REDIS_PASSWORD: str | None
+    DECODE_RESPONSES: bool
 
     # # OpenAI
     # OPENAI_API_KEY: str
@@ -58,21 +57,20 @@ class Settings(BaseSettings):
     # OPENAI_TEMPERATURE: float
     # OPENAI_MAX_TOKENS: int
 
-    # # Email
+    # # EMAIL
     # SMTP_HOST: str
     # SMTP_PORT: int
     # SMTP_USER: str
     # SMTP_PASS: str
     # SMTP_FROM: str
 
-    DEFAULT_ROLE_NAME: str
-
     @property
     def DATABASE_URL_asyncpg(self) -> str:
         return (
-        f"postgresql+asyncpg://{self.POSTGRES_USER}:"
-        f"{self.POSTGRES_PASSWORD}@{self.DB_HOST}:"
-        f"{self.DB_PORT}/{self.POSTGRES_DB}")
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:"
+            f"{self.POSTGRES_PASSWORD}@{self.DB_HOST}:"
+            f"{self.DB_PORT}/{self.POSTGRES_DB}"
+        )
 
     @property
     def cors_origins(self) -> list[str]:
@@ -87,11 +85,6 @@ class Settings(BaseSettings):
             ])
 
         return origins
-
-    @property
-    def current_time(self):
-        return pytz.timezone("Asia/Tashkent")
-
 
 @lru_cache
 def get_settings() -> Settings:

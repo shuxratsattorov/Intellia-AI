@@ -1,4 +1,4 @@
-from app.modules.auth.api.v1.router import router as auth_router
+from app.modules.auth.api.router import router as auth_router
 
 api_v1 = '/api/v1'
 
