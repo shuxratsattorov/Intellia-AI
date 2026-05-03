@@ -4,7 +4,8 @@ from fastapi import Depends
 from app.core.config  import settings
 from sqlalchemy.ext.asyncio import (
     create_async_engine, 
-    AsyncSession, async_sessionmaker
+    AsyncSession, 
+    async_sessionmaker
 )
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
@@ -18,7 +19,7 @@ def get_async_factory() -> async_sessionmaker:
 async_engine = create_async_engine(
     settings.DATABASE_URL_asyncpg,
     echo=False,
-    pool_pre_ping=True,
+    pool_pre_ping=True
 )
 
 AsyncSessionLocal = async_sessionmaker[AsyncSession](
@@ -26,7 +27,7 @@ AsyncSessionLocal = async_sessionmaker[AsyncSession](
     class_=AsyncSession,
     expire_on_commit=False,
     autoflush=False,
-    autocommit=False,
+    autocommit=False
 )
 
 async def get_db():

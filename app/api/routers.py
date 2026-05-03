@@ -1,6 +1,5 @@
+from app.api.v1 import api_v1
 from app.modules.auth.api.router import router as auth_router
-
-api_v1 = '/api/v1'
 
 
 def routers_prefixs_tags():

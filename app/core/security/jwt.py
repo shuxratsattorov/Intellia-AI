@@ -4,14 +4,21 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from app.core.config import settings
-from app.core.exception import InvalidIssuerError, InvalidTokenError, TokenExpiredError, TokenRevokedError
 from app.modules.auth.repository import JWTTokenRepository
+from app.core.error.exception import InvalidKeyError, TokenInvalidError
+from app.core.error.exception import (
+    TokenExpiredError, 
+    TokenInvalidError,
+    TokenRevokedError,
+    InvalidIssuerError,
+    InvalidSignatureError,
+    ImmatureSignatureError
+)
 
 
 logger = logging.getLogger(__name__)
 
    
-
 class JWT: 
     def __init__(self, blacklist_store=None):
         self.algorithm = settings.JWT_ALGORITHM
@@ -27,10 +34,8 @@ class JWT:
     def read_file(path: str) -> str:
         with open(path, "r") as f:
             return f.read()  
- 
-    ####################################################################################
-    # --- Apply Pepper Hmac ------------------------------------------------------------    
-    ####################################################################################
+
+    # ---------------- Create Access Token ----------------    
 
     def create_access_token(self, user_id: int, roles: str or list[str]) -> str:
         
@@ -44,9 +49,7 @@ class JWT:
 
         return self._encode(payload)
  
-    ####################################################################################
-    # --- Apply Pepper Hmac ------------------------------------------------------------    
-    ####################################################################################
+    # ---------------- Create Refresh Token ----------------    
 
     def create_refresh_token(self, user_id: int, exp: int = None) -> str:
         expire_time = exp if exp is not None else self._now + timedelta(
@@ -62,9 +65,7 @@ class JWT:
 
         return self._encode(payload)
  
-    ####################################################################################
-    # --- Verify Access Token ----------------------------------------------------------    
-    ####################################################################################
+    # ---------------- Verify Access Token ----------------    
 
     async def verify_access_token(self, token: str) -> dict:
         payload = await self._decode(token)
@@ -72,13 +73,11 @@ class JWT:
             not payload.get("rol") or
             not self._is_access_token(payload)
         ):
-            raise InvalidTokenError("This is not a access token")
+            raise TokenInvalidError
             
         return payload
  
-    ####################################################################################
-    # --- Verify Refresh Token ---------------------------------------------------------    
-    ####################################################################################
+    # ---------------- Verify Refresh Token ----------------    
 
     async def verify_refresh_token(self, token: str) -> dict:
         payload = await self._decode(token)
@@ -86,13 +85,11 @@ class JWT:
             payload.get("rol") or
             not self._is_refresh_token(payload)
         ):
-            raise InvalidTokenError()
+            raise TokenInvalidError
 
         return payload
 
-    ####################################################################################
-    # --- Apply Pepper Hmac ------------------------------------------------------------    
-    ####################################################################################
+    # ---------------- Create Token Pair ----------------    
 
     def create_token_pair(self, user_id: str, roles: list = None) -> dict:
         return {
@@ -101,26 +98,7 @@ class JWT:
             "type": "Bearer",
             "exp": self.access_token_ttl * 60}
  
-    ####################################################################################
-    # --- Apply Pepper Hmac ------------------------------------------------------------    
-    ####################################################################################
-
-    async def refresh_access_token(self, refresh_token: str, roles: str or []) -> dict:
-        payload = await self.verify_refresh_token(refresh_token)
-        user_id = payload.get("sub")
-        exp = payload.get('exp')
-        
-        new_access = self.create_access_token(user_id, roles)
-        self.create_refresh_token(user_id=user_id, exp=exp)
-        logger.info(f"The access token has been updated: user={user_id}")
-        return {
-            "access_token": new_access,
-            "type": "Bearer",
-            "exp": self._now + timedelta(minutes=self.access_token_ttl)}
- 
-    ####################################################################################
-    # --- Is Access Token --------------------------------------------------------------    
-    ####################################################################################        
+     # ---------------- Is Access Token ----------------            
  
     def _is_access_token(self, payload: dict) -> bool:
         exp = payload.get("exp")
@@ -133,9 +111,7 @@ class JWT:
 
         return abs(lifetime - self.access_token_ttl * 60) < 5
 
-    ####################################################################################
-    # --- Is Refresh Token -------------------------------------------------------------    
-    ####################################################################################
+    # ---------------- Is Refresh Token ----------------    
 
     def _is_refresh_token(self, payload: dict) -> bool:
         exp = payload.get("exp")
@@ -148,20 +124,21 @@ class JWT:
 
         return abs(lifetime - self.refresh_token_ttl * 24 * 60 * 60) < 5  
 
-    ####################################################################################
-    # --- Encode JWT -------------------------------------------------------------------    
-    #################################################################################### 
+    # ---------------- Encode JWT ----------------    
 
     def _encode(self, payload: dict) -> str:
+        try:
+            token = jwt.encode(
+                payload,
+                self.read_file(self.private_key),
+                algorithm=self.algorithm
+            )
+        except jwt.InvalidKeyError:
+            raise InvalidKeyError()   
 
-        return jwt.encode(
-            payload,
-            self.read_file(self.private_key),
-            algorithm=self.algorithm)
- 
-    ####################################################################################
-    # --- Decode JWT -------------------------------------------------------------------    
-    ####################################################################################
+        return token     
+
+     # ---------------- Decode JWT ----------------
 
     async def _decode(self, token: str) -> dict:
         try:
@@ -173,23 +150,38 @@ class JWT:
             )   
         except jwt.ExpiredSignatureError:
             raise TokenExpiredError()
+
         except jwt.InvalidIssuerError:
             raise InvalidIssuerError()
-        except jwt.InvalidTokenError:
-            raise InvalidTokenError()
 
+        except jwt.ImmatureSignatureError:
+            raise ImmatureSignatureError() 
+
+        except jwt.InvalidSignatureError:
+            raise InvalidSignatureError()
+
+        except jwt.DecodeError:
+            raise TokenInvalidError()       
+
+        except jwt.InvalidKeyError:
+            raise InvalidKeyError()
+
+        except jwt.InvalidTokenError:
+            raise TokenInvalidError()
+
+        # business logic
         user_id = payload.get("sub")
         jti = payload.get("jti")
 
-        if not user_id or not jti:
-            raise InvalidTokenError()
+        if not isinstance(user_id, str) or not user_id.isdigit():
+            raise TokenInvalidError
 
-        is_revoked = await self._blacklist.jti_exists(user_id=user_id, jti=jti)
+        if not isinstance(jti, str) or not jti.strip():
+            raise TokenInvalidError
+
+        is_revoked = await self._blacklist.jti_exists(
+            user_id=user_id, token=token, jti=jti
+        )
         if is_revoked:
             raise TokenRevokedError()
         return payload
-
-
-print(JWT().create_access_token(user_id=1, roles="user"))
-print(f"\n########################################################\n")
-print(JWT().create_refresh_token(user_id=1))

@@ -4,6 +4,7 @@ from sqlalchemy import select, update, exists
 
 from app.modules.users.models import User
 from app.db.base_repo import AsyncRepository
+from app.modules.auth.models.rbac import Role, UserRole, RolePermission
 from app.modules.auth.models.auth import RefreshToken, UserCredentials
 
 
@@ -20,8 +21,15 @@ class UserRepository(AsyncRepository[User]):
         result = await self.session.execute(stmt)
         return result.scalar()
 
-    async def get_id_by_email(self, email: str) -> int | None:
-        stmt = select(User.id).where(User.email == email)
+    async def exisit_password_by_email(self, email: str) -> str:
+        stmt = select(UserCredentials.password_hash
+            ).join(User, User.id == UserCredentials.user_id
+            ).where(User.email == email)
+        result = await self.session.execute(stmt)
+        return result.scalar() 
+
+    async def get_user_by_email(self, email: str) -> int | None:
+        stmt = select(User).where(User.email == email)
         result = await self.session.execute(stmt)
 
         return result.scalar_one_or_none()
@@ -33,9 +41,25 @@ class UserRepository(AsyncRepository[User]):
             is_verified=is_verified
         )
         self.session.add(user)
-        await self.session.flush()
-        
+        # await self.session.flush()
+        self.session.commit()
         return user
+
+    async def set_verified(self, email: str) -> str:
+        stmt = update(User
+            ).where(User.email == email
+            ).values(is_verified=True)
+        self.session.execute(stmt)
+
+        return stmt
+
+    async def get_current_roles_by_user_id(self, user_id: int) -> list[Role]:
+        stmt = select(Role
+            ).join(Role.users
+            ).where(UserRole.user_id == user_id)
+        
+        result = await self.session.execute(stmt)
+        return result.scalars().unique().all()
 
         
 class UserCredentialsRepository(AsyncRepository[UserCredentials]):
@@ -58,21 +82,16 @@ class UserCredentialsRepository(AsyncRepository[UserCredentials]):
 class JWTTokenRepository(AsyncRepository[RefreshToken]):
     model = RefreshToken
 
-    async def jti_exists(self, user_id: int, jti: str) -> bool:
+    async def jti_exists(self, user_id: int, token: str, jti: str) -> bool:
         stmt = select(RefreshToken.jti
-        ).exists().where(RefreshToken.user_id == user_id, RefreshToken.jti == jti)
-
+        ).exists().where(
+            RefreshToken.user_id == user_id, 
+            RefreshToken.token == token, 
+            RefreshToken.jti == jti
+        )
         result = await self.session.execute(stmt)
 
-        return result.scalar()
-
-    async def token_exists(self, user_id: int, token: str) -> bool:
-        stmt = select(RefreshToken.token
-        ).exists().where(RefreshToken.user_id == user_id, RefreshToken.token == token)
-
-        result = await self.session.execute(stmt)
-
-        return result.scalar()    
+        return result.scalar() 
 
     async def create_refresh_token(self, user_id: int, token: str) -> RefreshToken:  
         stmt = RefreshToken(user_id=user_id,token=token)

@@ -1,92 +1,92 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+# from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 
-class RegisterRequest(BaseModel):
-    email: EmailStr = Field(example="intellia2026@gmail.com")
-    password: str = Field(min_length=8, max_length=32, example="intellia2026")
-    confirm_password: str = Field(example="intellia2026")
+# class RegisterRequest(BaseModel):
+#     email: EmailStr = Field(example="intellia2026@gmail.com")
+#     password: str = Field(min_length=8, max_length=32, example="intellia2026")
+#     confirm_password: str = Field(example="intellia2026")
 
-    @field_validator("email")
-    @classmethod
-    def normalize_email(cls, v: str) -> str:
-        return v.strip().lower()
+#     @field_validator("email")
+#     @classmethod
+#     def normalize_email(cls, v: str) -> str:
+#         return v.strip().lower()
 
-    @model_validator(mode="after")
-    def passwords_match(self):
-        if self.password != self.confirm_password:
-            raise ValueError("Passwords do not match")
-        return self
-
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-    @field_validator("email")
-    @classmethod
-    def normalize_email(cls, v: str) -> str:
-        return v.strip().lower()
+#     @model_validator(mode="after")
+#     def passwords_match(self):
+#         if self.password != self.confirm_password:
+#             raise ValueError("Passwords do not match")
+#         return self
 
 
-class RefreshRequest(BaseModel):
-    refresh_token: str
+# class LoginRequest(BaseModel):
+#     email: EmailStr
+#     password: str
+
+#     @field_validator("email")
+#     @classmethod
+#     def normalize_email(cls, v: str) -> str:
+#         return v.strip().lower()
 
 
-class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
-
-    @field_validator("email")
-    @classmethod
-    def normalize_email(cls, v: str) -> str:
-        return v.strip().lower()
+# class RefreshRequest(BaseModel):
+#     refresh_token: str
 
 
-class ResetPasswordRequest(BaseModel):
-    token: str
-    new_password: str = Field(min_length=8, max_length=32, example="intellia2026")
-    confirm_password: str = Field(example="intellia2026")
+# class ForgotPasswordRequest(BaseModel):
+#     email: EmailStr
 
-    @model_validator(mode="after")
-    def passwords_match(self):
-        if self.new_password != self.confirm_password:
-            raise ValueError("Passwords do not match")
-        return self
+#     @field_validator("email")
+#     @classmethod
+#     def normalize_email(cls, v: str) -> str:
+#         return v.strip().lower()
 
 
-class TokenPair(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-    access_expires_at: str
-    refresh_expires_at: str
+# class ResetPasswordRequest(BaseModel):
+#     token: str
+#     new_password: str = Field(min_length=8, max_length=32, example="intellia2026")
+#     confirm_password: str = Field(example="intellia2026")
+
+#     @model_validator(mode="after")
+#     def passwords_match(self):
+#         if self.new_password != self.confirm_password:
+#             raise ValueError("Passwords do not match")
+#         return self
 
 
-class RegisterResponse(BaseModel):
-    email: EmailStr
-    is_verified: bool
+# class TokenPair(BaseModel):
+#     access_token: str
+#     refresh_token: str
+#     token_type: str = "bearer"
+#     access_expires_at: str
+#     refresh_expires_at: str
 
 
-class LoginResponse(BaseModel):
-    tokens: TokenPair
+# class RegisterResponse(BaseModel):
+#     email: EmailStr
+#     is_verified: bool
 
 
-class MessageResponse(BaseModel):
-    message: str
+# class LoginResponse(BaseModel):
+#     tokens: TokenPair
 
 
-class RefreshRequest(BaseModel):
-    token: str
+# class MessageResponse(BaseModel):
+#     message: str
 
 
-class RefreshResponse(BaseModel):
-    access_token: str
-    type: str
-    exp: int  
+# class RefreshRequest(BaseModel):
+#     token: str
 
 
-class RevokeRequest(BaseModel):
-    token: str 
+# class RefreshResponse(BaseModel):
+#     access_token: str
+#     type: str
+#     exp: int  
 
 
-class MessegeResponse(BaseModel):
-    message: str = "success"
+# class RevokeRequest(BaseModel):
+#     token: str 
+
+
+# class MessegeResponse(BaseModel):
+#     message: str = "success"

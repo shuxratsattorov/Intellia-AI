@@ -6,11 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
+from app.api.routers import routers_prefixs_tags
 from app.core.config import settings
 from app.db import factory, base as db
 from app.db.session import AsyncSessionLocal
-from app.core.routers import routers_prefixs_tags
-from app.modules.auth.seed_rbac import RBACManager
+from app.modules.auth.service.rbac import RBACManager
 
 
 @asynccontextmanager
@@ -77,7 +77,6 @@ for router, prefix, tags in routers_prefixs_tags():
         prefix=prefix,
         tags=tags
     )
-
 
 async def seed_rbac():
     async with AsyncSessionLocal() as session:
