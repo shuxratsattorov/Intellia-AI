@@ -1,6 +1,6 @@
 from fastapi import status
 
-from app.core.common import ErrorCode, ErrorModel
+from app.core.error.error_code import ErrorCode, ErrorModel
 
 
 

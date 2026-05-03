@@ -3,19 +3,19 @@ from app.modules.auth.repository.auth import (
     UserCredentialsRepository,
     JWTTokenRepository
 )
-from app.modules.auth.repository.role_permission import (
+from app.modules.auth.repository.rbac import (
     PermissionRepository,
     RoleRepository,
     UserRoleRepository,
+    RolePermissionRepository,
 )
 
 __all__ = [
     "UserRepository",
     "UserCredentialsRepository",
-    "RefreshTokenRepository",
-    "PasswordResetTokenRepository",
+    "JWTTokenRepository",
     "PermissionRepository",
     "RoleRepository",
     "UserRoleRepository",
-    "JWTTokenRepository"
+    "RolePermissionRepository",
 ]

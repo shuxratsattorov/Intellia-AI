@@ -1,16 +1,37 @@
-from fastapi import Depends, HTTPException, status, Request, Response
+from fastapi import Depends, status, Request, Response
 
-from app.core.api_responses import responses
-from app.modules.auth.api.v1.router import router
+from app.modules.auth.api.router import router
+from app.shared.responses import responses  
+from app.core.error.error_code import ErrorCode
+from app.core.error.exception import (
+    InvalidIssuerError, 
+    InvalidTokenError, 
+    TokenExpiredError, 
+    TokenRevokedError, 
+    DefaultRoleNotConfigured, 
+    TokenNotFoundError,
+    UserAlreadyExists,
+)
+from app.core.error.http_exceptions import (
+    default_role_not_configured, 
+    no_refresh_token, 
+    register_user_already_exists, 
+    token_not_foud
+)
+
 from app.modules.auth.service.auth import AuthService, JWTService
 from app.modules.auth.deps import get_auth_service, get_jwt_service
-from app.modules.auth.schemas.schemas import (
-    MessegeResponse, RefreshRequest, RefreshResponse, RegisterRequest, RegisterResponse, 
-    RevokeRequest)
-from app.core.common import ErrorCode
-from app.core.exception import (
-    TokenNotFoundError, TokenRevokedError, UserAlreadyExists, DefaultRoleNotConfigured, 
-    InvalidIssuerError, InvalidTokenError, TokenExpiredError)
+from app.modules.auth.schemas.auth import (
+    MessegeResponse, 
+    RefreshRequest, 
+    RefreshResponse, 
+    RegisterRequest, 
+    RegisterResponse, 
+    RevokeRequest,
+    SetPasswordRequest,
+    VerifiyOtpRequest,
+    VerifiyOtpResponse
+)  
 
 
 @router.post(
@@ -30,21 +51,74 @@ async def register(
 ) -> RegisterResponse:
     try:
         user = await service.register(
-            email=data.email,
-            password=data.password,
+            email=data.email
         )
     except UserAlreadyExists:
-        raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=ErrorCode.REGISTER_USER_ALREADY_EXISTS
-        )
+        raise register_user_already_exists
     except DefaultRoleNotConfigured:
-        raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=ErrorCode.DEFAULT_ROLE_NOT_CONFIGURED
-        )
+        raise default_role_not_configured
 
-    return RegisterResponse(email=user.email, is_verified=user.is_verified)
+    return user
+
+
+@router.post(
+    "/verify-otp", 
+    response_model=VerifiyOtpResponse, 
+    status_code=status.HTTP_201_CREATED,
+    name="verify_otp:verify_otp",
+    responses=responses([
+        ErrorCode.REGISTER_USER_ALREADY_EXISTS, 
+        ErrorCode.DEFAULT_ROLE_NOT_CONFIGURED]
+    )
+)
+
+async def verify_otp(
+    data: VerifiyOtpRequest,
+    service: AuthService = Depends(get_auth_service)
+) -> RegisterResponse:
+    try:
+        user = await service.verify_otp(
+            email=data.email,
+            otp=data.otp
+        )
+    except INVALID_OTP:
+        raise 
+    except OTP_EXPIRED:
+        raise 
+    except USER_NOT_FOUND:
+        raise    
+    except ALREADY_VERIFIED:
+        raise
+
+    return user
+
+
+@router.post(
+    "/set-password", 
+    response_model=JWTREsponse, 
+    status_code=status.HTTP_201_CREATED,
+    name="get_password:get_password",
+    responses=responses([
+        ErrorCode.REGISTER_USER_ALREADY_EXISTS, 
+        ErrorCode.DEFAULT_ROLE_NOT_CONFIGURED]
+    )
+)
+
+async def set_password(
+    data: SetPasswordRequest,
+    service: AuthService = Depends(get_auth_service)
+) -> JWTREsponse:
+    try:
+        user = await service.set_password(
+            email=data.email, 
+            password=data.password
+        )
+    except UserAlreadyExists:
+        raise register_user_already_exists
+    except DefaultRoleNotConfigured:
+        raise default_role_not_configured
+
+    return user
 
 
 @router.post(
@@ -61,37 +135,27 @@ async def logut(
 ) -> MessegeResponse:
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.NO_REFRESH_TOKEN)
+        raise no_refresh_token
 
     try:
-        service.logout(refresh_token=refresh_token)
+        await service.logout(
+            refresh_token=refresh_token
+        )
 
     except TokenNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.TOKEN_NOT_FOUND)    
+        raise token_not_foud
 
     except TokenExpiredError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.ACCESS_TOKEN_ALREADY_EXPIRED)
+        raise 
 
     except TokenRevokedError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.TOKEN_REVOKED)
+        raise 
 
     except InvalidIssuerError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.TOKEN_INVALID_ISSUER)
+        raise 
 
     except InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.ACCESS_TOKEN_DECODE_ERROR)          
+        raise           
 
     response.delete_cookie(
         key="refresh_token",
@@ -116,29 +180,23 @@ async def refresh(
     service: JWTService = Depends(get_jwt_service)
 ) -> RefreshResponse:
     try:
-        refresh_token = await service.refresh_access_token(refresh_token=data.token)
+        token = await service.refresh_access_token(
+            refresh_token=data.token
+        )
 
     except TokenExpiredError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.ACCESS_TOKEN_ALREADY_EXPIRED)
+        raise 
 
     except TokenRevokedError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.TOKEN_REVOKED)
+        raise 
 
     except InvalidIssuerError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.TOKEN_INVALID_ISSUER)
+        raise 
 
     except InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.ACCESS_TOKEN_DECODE_ERROR)
+        raise 
 
-    return refresh_token   
+    return token   
 
 
 @router.post(
@@ -153,26 +211,20 @@ async def revoke(
     service: JWTService = Depends(get_jwt_service)
 ) -> MessegeResponse:
     try:
-        service.revoke_token(refresh_token=data.token)
+        await service.revoke_token(
+            refresh_token=data.token
+        )
 
     except TokenExpiredError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.ACCESS_TOKEN_ALREADY_EXPIRED)
+        raise 
 
     except TokenRevokedError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.TOKEN_REVOKED)
+        raise 
 
     except InvalidIssuerError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.TOKEN_INVALID_ISSUER)
+        raise 
 
     except InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ErrorCode.ACCESS_TOKEN_DECODE_ERROR)    
+        raise   
 
     return MessegeResponse

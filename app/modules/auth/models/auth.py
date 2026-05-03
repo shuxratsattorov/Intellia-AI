@@ -1,8 +1,11 @@
 from __future__ import annotations
+from enum import Enum
 from datetime import datetime
 from sqlalchemy import (
+    Text,
     Index,
     String,
+    Boolean,
     DateTime,
     ForeignKey,
     UniqueConstraint
@@ -49,3 +52,22 @@ class RefreshToken(Base, IDMixin):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True)
     user: Mapped["User"] = relationship()
+
+
+class EmailType(Enum):
+    OTP = "otp"
+    VERIFICATION = "verification"
+    PASSWORD_RESET = "password_reset"
+    WELCOME = "welcome"
+    NOTIFICATION = "notification"
+
+
+class EmailTemplate(Base, IDMixin, TimestampMixin):
+    __tablename__ = "email_templates"
+
+    name: Mapped[str] = mapped_column(String, unique=True)  
+    subject: Mapped[str] = mapped_column(String)
+    html_body: Mapped[str] = mapped_column(Text)
+    text_body: Mapped[str] = mapped_column(Text, nullable=True)
+    email_type: Mapped[str] = mapped_column(Enum(EmailType))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)

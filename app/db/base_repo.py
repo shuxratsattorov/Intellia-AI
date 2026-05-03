@@ -7,7 +7,7 @@ from sqlalchemy.orm import InstrumentedAttribute, Session
 from sqlalchemy import Select, delete, exists, select, update, func
 
 from app.db.base import Base
-from app.core.exception import NotFoundError
+from app.core.error.exception import NotFoundError
 
 
 ModelType = TypeVar("ModelType", bound=Base)

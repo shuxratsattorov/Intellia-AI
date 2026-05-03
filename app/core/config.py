@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     ENV: str
     DEBUG: bool
     DEFAULT_ROLE: str
+    OTP_LENGTH: int
 
     # CORS
     CORS_ORIGINS: list
@@ -57,12 +58,12 @@ class Settings(BaseSettings):
     # OPENAI_TEMPERATURE: float
     # OPENAI_MAX_TOKENS: int
 
-    # # EMAIL
-    # SMTP_HOST: str
-    # SMTP_PORT: int
-    # SMTP_USER: str
-    # SMTP_PASS: str
-    # SMTP_FROM: str
+    # EMAIL
+    SMTP_HOST: str
+    SMTP_PORT: int
+    SMTP_USER: str
+    SMTP_PASS: str
+    SMTP_FROM: str
 
     @property
     def DATABASE_URL_asyncpg(self) -> str:

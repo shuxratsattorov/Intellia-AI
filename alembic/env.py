@@ -13,7 +13,7 @@ from app.modules.auth.models.auth import (
     OAuthAccount,
     RefreshToken
 )
-from app.modules.auth.models.role_permission import (
+from app.modules.auth.models.rbac import (
     Permission,
     RolePermission,
     UserRole,

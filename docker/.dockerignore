@@ -2,7 +2,12 @@ __pycache__
 *.pyc
 *.pyo
 *.pyd
-.env
 .venv
 .git
 pytest_cache
+test.py
+.github
+.vscode
+README.md
+.gitignore
+.env.example
